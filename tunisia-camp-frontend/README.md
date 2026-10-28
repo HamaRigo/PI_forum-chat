@@ -1,78 +1,59 @@
-<p align="center">
-    <a href="https://github.com/hamzahamidi/angular-forum/actions?query=workflow%3ABuild">
-        <img src="https://github.com/hamzahamidi/angular-forum/workflows/Build/badge.svg" alt="Build Status">
-    </a>
-    <a href="https://github.com/hamzahamidi/angular-forum/releases/latest">
-        <img src="https://img.shields.io/github/release/hamzahamidi/angular-forum.svg" alt="Release"/>
-    </a>
-    <a href="https://app.netlify.com/sites/demo-forum/deploys">
-        <img src="https://api.netlify.com/api/v1/badges/9119af54-2449-4044-980d-2528a15fd2f4/deploy-status" alt="Build Status">
-    </a>
-    <a href="https://github.com/hamzahamidi/angular-forum/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/hamzahamidi/angular-forum.svg" alt="License MIT">
-    </a>
-</p>
+# 🚀 Tunisia Camp — Forum & Real-Time Chat Platform
 
-> ### Angular project containing real world examples (CRUD, auth, advanced patterns, etc).
+> **Full-stack capstone project**: an Angular 14 SPA on top of a Spring Boot API that combines a moderated forum (markdown posts, comments, reactions, image uploads) with a real-time STOMP/WebSocket chat (rooms, presence, read receipts) — delivered through GitHub Actions CI + a Jenkins/SonarQube quality pipeline.
 
-# ![Angular Forum App](logo.png)
+![Angular](https://img.shields.io/badge/Angular-14-DD0031?logo=angular&style=flat)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7-6DB33F?logo=springboot&style=flat)
+![WebSocket](https://img.shields.io/badge/STOMP-over-WebSocket-blue)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&style=flat)
+![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
 
+---
 
-### [Demo](http://hamidihamza.com/angular-forum)&nbsp;&nbsp;&nbsp;&nbsp;
+## What it does
 
-This codebase was created to demonstrate a fully fledged application built with Angular that interacts with an actual backend server including CRUD operations, authentication, routing, pagination, and more.
+- 📰 **Forum** — create/edit posts with **Markdown** + live preview, attach images, comment, and react with 👍/👎; feeds support **pagination, dynamic sorting and a trending "most-liked" view**.
+- 💬 **Real-time chat** — WebSocket rooms with instant broadcast, **online presence** pushed on login/logout, **paginated history** and **read receipts**.
+- 🛡️ **Content moderation** — banned words are sanitized **server-side at write time**, with a runtime-editable dictionary.
+- 👤 **Profiles** — per-user paginated post lists and liked-post lists.
 
+## Highlights that matter to reviewers
 
-# Getting started
+| Area | What was done |
+|---|---|
+| **Frontend architecture** | Fully modular Angular app: 4 lazy-loaded feature modules + `core` (single source of models/services) + `shared` (reusable UI); `PreloadAllModules`; route **resolvers** fetch data before component init; **HTTP interceptor** centralizes auth tokens; unidirectional `Component → Service → HttpClient → RxJS` flow. |
+| **Backend architecture** | Clean `Controller → Service → Repository` layering; **DTO layer** decouples the JPA model from the API contract; **domain-specific exceptions** mapped to correct HTTP statuses; Bean Validation on entities; auto-generated **OpenAPI/Swagger** docs. |
+| **Real-time** | STOMP broker with per-room topics (`/channel/chat/{room}`), messages **persisted before broadcast**, single bulk native `UPDATE` for read receipts (no N+1). |
+| **DevOps** | GitHub Actions CI (Node matrix build on every PR), **CodeQL** security scanning, Dependabot, Jenkins → **SonarQube quality gate**, Docker Compose for tooling, nginx-served production frontend; pre-commit lint hook. |
+| **Trade-off awareness** | Known limits and upgrade paths documented honestly (in-memory broker → RabbitMQ relay, filesystem upload → object storage, `ddl-auto` → Flyway). |
 
-Make sure you have the [Angular CLI](https://github.com/angular/angular-cli#installation) installed globally. 
+---
 
-We use npm the default package manager of NodeJs & install the dependencies with `npm install`.
+## Repository layout
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+```
+PI_forum-chat/
+├── tunisia-camp-backend/     # Spring Boot REST + WebSocket API (Java 17, MySQL)
+├── tunisia-camp-frontend/    # Angular 14 SPA (TypeScript, RxJS)
+└── docs/
+    ├── ARCHITECTURE.md       # design decisions, data model, request lifecycles
+    └── API.md                # full REST + STOMP endpoint reference
+```
 
-## Building the project
-Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Docker
-
-Or simply run the example using docker:
+## Quick start
 
 ```bash
-docker-compose up
+# Backend (requires Java 17 + MySQL on localhost:3306)
+cd tunisia-camp-backend && ./mvnw spring-boot:run     # → http://localhost:4201/tunisia-camp
+
+# Frontend (requires Node ≥ 16)
+cd tunisia-camp-frontend && npm ci && npm start       # → http://localhost:4200
 ```
-Then navigate to `http://localhost:4200/
 
-## Functionality overview
+## Try the API
 
-The example application is a social blogging site (i.e. a Medium.com clone). You can view a live demo over at http://hamidihamza.com/angular-forum/
+Swagger UI: `http://localhost:4201/tunisia-camp/swagger-ui.html` — or see the annotated endpoint tables in [docs/API.md](docs/API.md), including the STOMP chat protocol (`/ichat` endpoint, `/app/messages` sends, `/channel/chat/{room}` subscriptions).
 
-**General functionality:**
+---
 
-- Authenticate users via JWT (login/signup pages + logout button on settings page)
-- CRU* users (sign up & settings page - no deleting required)
-- CRUD Articles
-- CR*D Comments on articles (no updating required)
-- GET and display paginated lists of articles
-- Favorite articles
-- Follow other users
-
-**The general page breakdown looks like this:**
-
-- Home page (URL: /#/ )
-    - List of tags
-    - List of articles pulled from either Feed, Global, or by Tag
-    - Pagination for list of articles
-- Sign in/Sign up pages (URL: /#/login, /#/register )
-    - Uses JWT (store the token in localStorage)
-    - Authentication can be easily switched to session/cookie based
-- Settings page (URL: /#/settings )
-- Editor page to create/edit articles (URL: /#/editor, /#/editor/article-slug-here )
-- Article page (URL: /#/article/article-slug-here )
-    - Delete article button (only shown to article's author)
-    - Render markdown from server client side
-    - Comments section at bottom of page
-    - Delete comment button (only shown to comment's author)
-- Profile page (URL: /#/profile/:username, /#/profile/:username/favorites )
-    - Show basic user info
-    - List of articles populated from author's created articles or author's favorited articles
+*Full system design, rationale and scaling notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).*
